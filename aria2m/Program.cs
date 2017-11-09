@@ -59,7 +59,7 @@ namespace aria2m
                     Toggle_aria2(null, null);
                 //Clipboard.SetText(copytxt);
                 //trayicon.ShowBalloonTip(3000, "Texts copied.", copytxt, ToolTipIcon.None);
-                if (Call_RPC("addUri", args[0], args[1]))
+                if (Call_RPC("addUri", args[0], args[1], args[2]))
                     trayicon.ShowBalloonTip(3000, "Link added.", args[0], ToolTipIcon.None);
                 //copytxt = null;
             //}
@@ -119,7 +119,7 @@ namespace aria2m
             if (!exit || Process.GetProcessesByName("aria2c").Length > 0)
             {
                 //aria2.shutdown need wait 3 seconds
-                Call_RPC("saveSession", null, null);
+                Call_RPC("saveSession", null, null, null);
                 //Thread.Sleep(1000);
                 //if aria2c not open at this time in the program, there is no aria2c
                 //aria2c.CloseMainWindow();
@@ -142,7 +142,7 @@ namespace aria2m
             }
         }
 
-        private static bool Call_RPC(string method, string uri, string dir)
+        private static bool Call_RPC(string method, string uri, string refer, string dir)
         {
             string secret = "";
             foreach (var line in File.ReadLines(AppDomain.CurrentDomain.BaseDirectory + "aria2.conf"))
@@ -153,16 +153,26 @@ namespace aria2m
                     break;
                 }
             }
+            string port = "6800";
+            foreach (var line in File.ReadLines(AppDomain.CurrentDomain.BaseDirectory + "aria2.conf"))
+            {
+                if (line.StartsWith("rpc-listen-port"))
+                {
+                    port = line.Substring(16);
+                    break;
+                }
+            }
             if (dir != null)
-                dir = ", {\"dir\": \"" + dir.Replace("\\", "/") + "\"}";
+                dir = "\"dir\": \"" + dir.Replace("\\", "/") + "\"";
             try
             {
                 //string json = JsonConvert.SerializeObject(new JObject { ["jsonrpc"] = "2.0", ["id"] = "m", ["method"] = "aria2." + method, ["params"] = new JArray { "token:secret", new JArray { "https://github.com/master.zip" } } });
                 using (var webClient = new WebClient())
                 {
                     webClient.Encoding = System.Text.Encoding.UTF8;
-                    webClient.UploadString("http://localhost:6800/jsonrpc", "POST", "{ \"jsonrpc\": \"2.0\", \"id\": \"m\", \"method\": \"aria2." + method + "\", \"params\": [\"token:" + secret + "\", [\"" + uri + "\"]" + dir + "] }");
+                    webClient.UploadString("http://localhost:" + port + "/jsonrpc", "POST", "{ \"jsonrpc\": \"2.0\", \"id\": \"m\", \"method\": \"aria2." + method + "\", \"params\": [\"token:" + secret + "\", [\"" + uri + "\"], {\"referer\": \"" + refer + "\", " + dir + " } ] }");
                     secret = null;
+                    port = null;
                     return true;
                 }
                 //json = null;
@@ -220,7 +230,11 @@ namespace aria2m
             // program is already running.
             app.Startup += (s, e) => trayManager = new TrayManager();
             if (args.Length > 0)
-                app.Startup += (s, e) => trayManager.Arg_Call(new string[] { e.CommandLine[0], e.CommandLine.Count == 2 ? e.CommandLine[1] : null });
+                app.Startup += (s, e) => trayManager.Arg_Call(new string[] {
+                    e.CommandLine[0],
+                    e.CommandLine.Count > 1 ? e.CommandLine[1] : null,
+                    e.CommandLine.Count > 2 ? e.CommandLine[2] : null
+                });
             /*void start_Call(object sender, StartupEventArgs e)
             {
                 trayManager = new TrayManager();
@@ -238,7 +252,11 @@ namespace aria2m
             void next_Call(object sender, StartupNextInstanceEventArgs e)
             {
                 if (e.CommandLine.Count > 0)
-                    trayManager.Arg_Call(new string[] { e.CommandLine[0], e.CommandLine.Count == 2 ? e.CommandLine[1] : null });
+                    trayManager.Arg_Call(new string[] {
+                        e.CommandLine[0],
+                        e.CommandLine.Count > 1 ? e.CommandLine[1] : null,
+                        e.CommandLine.Count > 2 ? e.CommandLine[2] : null
+                    });
             }
             app.StartupNextInstance += new StartupNextInstanceEventHandler(next_Call);
 

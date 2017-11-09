@@ -9,7 +9,7 @@ Features:
 * Open most of local aria2's webui via trayicon.
 * Easily to add download links without open another aria2c (You need browser add-on like FlashGot).
 * Save session when you close aria2 by aria2m or exit aria2m.
-* Work fine with rpc-secret. 
+* Work fine with rpc-secret and rpc-listen-port. 
 
 　
 
@@ -30,7 +30,8 @@ The structure in your aria2m folder must like:
 ```
 　
 
-The arguments template in FlashGot (or other add-on) must be `[URL] [FOLDER]` or `[URL]`.
+The arguments template in FlashGot (or other add-on) must be `[URL] [REFERER] [FOLDER]` or `[URL] [REFERER]`.
+There is a space between arguments.
 
 　
 
