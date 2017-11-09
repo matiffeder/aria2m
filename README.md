@@ -31,7 +31,7 @@ The structure in your aria2m folder must like:
 　
 
 The arguments template in FlashGot (or other add-on) must be `[URL] [REFERER] [FOLDER]` or `[URL] [REFERER]`.
-There is a space between arguments.
+> There is a space between arguments.
 
 　
 
